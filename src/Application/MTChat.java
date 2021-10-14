@@ -124,7 +124,14 @@ public class MTChat extends JFrame {
     }
     
     public void connect() {
-        
+        try{
+            byte[] buffer = userField.getText().getBytes();
+            
+        } catch(Exception ex) {
+            JOptionPane.showMessageDialog(null,
+                    "Unable to connect, try again later",
+                    "Oops " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     public void setChat(){

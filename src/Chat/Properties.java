@@ -1,18 +1,26 @@
 package Chat;
 
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MulticastSocket;
+import java.net.NetworkInterface;
+import java.net.SocketAddress;
+import java.util.Enumeration;
+
 /**
  *
  * @author huert
  */
 public class Properties {
 
-    public static final String SERVER_IP = "127.0.0.1";
-    public static final int PORT = 1234;
+    public static final String GROUP_IP = "228.1.1.1";
+    public static final int SERVER_PORT = 1234;
     public static final int WIDTH = 1080;
     public static final int HEIGHT = 720;
-    public static final String SLASH= "\\"; //Windows
     public static final String HTMLHEAD = "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" charset=\"UTF-8\">"
-            + "<base href = \"file:" + System.getProperty("user.dir") + SLASH + "src"+SLASH+"Images\">"
             + "<style>body {margin: 0 auto; max-width: 800px; padding: 0 20px;font-family: Arial, Helvetica, sans-serif;font-size:large}"
             + ".container {border-width: 2px; border-style: solid; border-color: #ddd; background-color: #eee; border-radius: 5px; padding: 10px; margin: 10px 0;}"
             + ".darker {border-color: #ccc; background-color: #ddd;}"
@@ -48,4 +56,31 @@ public class Properties {
         "Sad"
     };
     public static final String AUDIOICON = "https://vk.com/images/emoji/D83DDCE3_2x.png";
+
+    public static void socketJoinGroup(MulticastSocket ms, InetAddress groupAddr,
+            boolean preferIpv6) throws IOException {
+        boolean interfaceSet = false;
+        Enumeration interfaces = NetworkInterface.getNetworkInterfaces(), addrs;
+        NetworkInterface i;
+        InetAddress address;
+        while (interfaces.hasMoreElements()) {
+            i = (NetworkInterface) interfaces.nextElement();
+            addrs = i.getInetAddresses();
+            while (addrs.hasMoreElements()) {
+                address = (InetAddress) addrs.nextElement();
+                if (preferIpv6 && address instanceof Inet6Address) {
+                    ms.joinGroup(new InetSocketAddress(groupAddr, ms.getPort()), i);
+                    interfaceSet = true;
+                    break;
+                } else if (!preferIpv6 && address instanceof Inet4Address) {
+                    ms.joinGroup(new InetSocketAddress(groupAddr, ms.getPort()), i);
+                    interfaceSet = true;
+                    break;
+                }
+            }
+            if (interfaceSet) {
+                break;
+            }
+        }
+    }
 }
