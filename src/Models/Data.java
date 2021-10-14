@@ -14,10 +14,13 @@ import java.io.Serializable;
 public class Data implements Serializable {
     
     private static final long serialVersionUID = 1L;
-    private int packetNo, total, prevPacketNo;
+    private static int userIDS = 1;
+    private int packetNo, total, prevPacketNo, userID;
     private byte[] data;
 
     public Data() {
+        userID = userIDS;
+        userIDS++;
     }
 
     public Data(int packetNo, int total, int prevPacketNo, byte[] data) {
@@ -25,6 +28,8 @@ public class Data implements Serializable {
         this.total = total;
         this.prevPacketNo = prevPacketNo;
         this.data = data;
+        userID = userIDS;
+        userIDS++;
     }
 
     public int getPacketNo() {
@@ -57,6 +62,22 @@ public class Data implements Serializable {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public int getUserID() {
+        return userID;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Data{packetNo=").append(packetNo);
+        sb.append(", total=").append(total);
+        sb.append(", prevPacketNo=").append(prevPacketNo);
+        sb.append(", userID=").append(userID);
+        sb.append(", data=").append(data);
+        sb.append('}');
+        return sb.toString();
     }
     
 }

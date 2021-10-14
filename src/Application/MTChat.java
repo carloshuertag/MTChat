@@ -68,7 +68,7 @@ public class MTChat extends JFrame {
         emojisMenuItems = new ArrayList<>();
         emojiButton = new JButton();
         messageArea = new JTextArea("Enter a message", 1, 2);
-        audioButton = new JButton(UIManager.getIcon("FileView.hardDriveIcon"));
+        audioButton = new JButton();
         sendButton = new JButton("Send message");
         setComponents();
         addComponents();
@@ -135,7 +135,7 @@ public class MTChat extends JFrame {
         htmlBuilder.setLength(0);
         htmlBuilder.append("<!DOCTYPE html><html>");
         htmlBuilder.append(Properties.HTMLHEAD);
-        htmlBuilder.append("<body><h1>MTChat</h1>");
+        htmlBuilder.append("<body><h1>MTChat</h1><main>");
         htmlBuilder.append(Properties.HTMLMSG1START);
         htmlBuilder.append("User1: ");
         htmlBuilder.append("Message");
@@ -150,35 +150,8 @@ public class MTChat extends JFrame {
         htmlBuilder.append(Properties.EMOJIURLS[1]);
         htmlBuilder.append(Properties.HTMLIMGEND);
         htmlBuilder.append(Properties.HTMLMSGEND);
-        htmlBuilder.append(Properties.HTMLMSG1START);
-        htmlBuilder.append("User1: ");
-        htmlBuilder.append("Message");
-        htmlBuilder.append(Properties.HTMLIMGSTART);
-        htmlBuilder.append(Properties.EMOJIURLS[0]);
-        htmlBuilder.append(Properties.HTMLIMGEND);
-        htmlBuilder.append(Properties.HTMLMSGEND);
-        htmlBuilder.append(Properties.HTMLMSG2START);
-        htmlBuilder.append("User2: ");
-        htmlBuilder.append("Response");
-        htmlBuilder.append(Properties.HTMLIMGSTART);
-        htmlBuilder.append(Properties.EMOJIURLS[1]);
-        htmlBuilder.append(Properties.HTMLIMGEND);
-        htmlBuilder.append(Properties.HTMLMSGEND);
-        htmlBuilder.append(Properties.HTMLMSG1START);
-        htmlBuilder.append("User1: ");
-        htmlBuilder.append("Message");
-        htmlBuilder.append(Properties.HTMLIMGSTART);
-        htmlBuilder.append(Properties.EMOJIURLS[0]);
-        htmlBuilder.append(Properties.HTMLIMGEND);
-        htmlBuilder.append(Properties.HTMLMSGEND);
-        htmlBuilder.append(Properties.HTMLMSG2START);
-        htmlBuilder.append("User2: ");
-        htmlBuilder.append("Response");
-        htmlBuilder.append(Properties.HTMLIMGSTART);
-        htmlBuilder.append(Properties.EMOJIURLS[1]);
-        htmlBuilder.append(Properties.HTMLIMGEND);
-        htmlBuilder.append(Properties.HTMLMSGEND);
-        htmlBuilder.append("</body></html>");
+        
+        htmlBuilder.append("</main></body></html>");
     }
     
     private void setInput(){
@@ -195,6 +168,7 @@ public class MTChat extends JFrame {
         setEmojis();
         inputPanel.add(emojiButton, constraints);
         constraints.gridx++;
+        setAudio();
         inputPanel.add(audioButton, constraints);
         constraints.gridx++;
         inputPanel.add(sendButton, constraints);
@@ -231,6 +205,22 @@ public class MTChat extends JFrame {
         IntStream.range(0, emojisMenuItems.size()).forEach((int i) -> {
             emojisPopupMenu.add(emojisMenuItems.get(i));
         });
+    }
+    
+    private void setAudio() {
+        try {
+            audioButton.setIcon(new ImageIcon(ImageIO.read(new URL(
+                    Properties.AUDIOICON))));
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(null,
+                    "Unable to load emojis, sorry", "Oops" + ex.getMessage(),
+                    JOptionPane.ERROR_MESSAGE);
+            audioButton.setIcon(UIManager.getIcon("FileView.hardDriveIcon"));
+        }
+        audioButton.addActionListener(i -> {
+            
+        });
+        audioButton.setPreferredSize(new Dimension(50, 25));
     }
 
     private void addComponents() {
