@@ -58,7 +58,12 @@ public class Server {
         }
 
         public void run() {
-            try{
+            try {
+                buffer = String.valueOf(users.size()).getBytes();
+                packet = new DatagramPacket(buffer, buffer.length,
+                        InetAddress.getByName(Properties.GROUP_IP),
+                        Properties.CLIENTS_PORT);
+                socket.send(packet);
                 users.forEach(user -> {
                     try {
                         baos = new ByteArrayOutputStream();
@@ -74,9 +79,9 @@ public class Server {
                         System.out.println("Cannot announce client: " + ex.getMessage());
                     }
                 });
-                Thread.sleep(7000);
+                Thread.sleep(5000);
             } catch (Exception ex) {
-                System.out.println("Thread sleep exception at "+this.getClass().getName());
+                System.out.println("Thread sleep exception at " + this.getClass().getName());
             }
         }
     }

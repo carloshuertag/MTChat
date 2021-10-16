@@ -1,6 +1,7 @@
 package Application;
 
 import Chat.Properties;
+import Models.User;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -40,30 +41,60 @@ import javax.swing.UIManager;
  * @author huert
  */
 public class MTChat extends JFrame {
-    
-    private class NewMessages extends Thread{
+
+    private class NewMessages extends Thread {
+
         private final MulticastSocket socket;
         private DatagramPacket packet;
         private byte[] buffer;
-        public NewMessages(MulticastSocket socket){
+
+        public NewMessages(MulticastSocket socket) {
             this.socket = socket;
         }
-        public void run(){
-            
+
+        public void run() {
+
         }
     }
-    
-    private class NewUsers extends Thread{
+
+    private class NewUsers extends Thread {
+
         private final MulticastSocket socket;
         private DatagramPacket packet;
         private ByteArrayInputStream bais;
         private ObjectInputStream ois;
         private byte[] buffer;
-        public NewUsers(MulticastSocket socket){
+
+        public NewUsers(MulticastSocket socket) {
             this.socket = socket;
         }
-        public void run(){
-            
+
+        public void run() {
+            buffer = new byte[65535];
+            packet = new DatagramPacket(buffer, buffer.length);
+            int usersCount = 0;
+            try {
+                socket.receive(packet);
+                usersCount = Integer.parseInt(new String(packet.getData(), 0,
+                        packet.getLength()));
+
+                IntStream.range(0, usersCount).forEach(i -> {
+                    try {
+                        buffer = new byte[65535];
+                        packet = new DatagramPacket(buffer, buffer.length);
+                        socket.receive(packet);
+                        bais = new ByteArrayInputStream(packet.getData());
+                        ois = new ObjectInputStream(bais);
+                        availableUsers.add((User) ois.readObject());
+                        setChatList();
+                    } catch (Exception ex) {
+                        System.out.println("Error at getting NewUsers list");
+                    }
+                });
+                Thread.sleep(5000);
+            } catch (Exception ex) {
+                System.out.println("Error at getting NewUsers");
+            }
         }
     }
 
@@ -83,12 +114,14 @@ public class MTChat extends JFrame {
     private JScrollPane scrollPane;
     private final MulticastSocket client;
     private DatagramPacket packet;
+    private final List<User> availableUsers;
 
-    public MTChat() throws IOException {
+    public MTChat() throws IOException, InterruptedException {
         super("MTChat");
         mainPanel = new JPanel(new BorderLayout(10, 10));
         startPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         chatsPanel = new JPanel();
+        availableUsers = new ArrayList<>();
         chatsListModel = new DefaultListModel<>();
         connectButton = new JButton("Connect");
         disconnectButton = new JButton("Disconnect");
@@ -106,7 +139,10 @@ public class MTChat extends JFrame {
         setComponents();
         addComponents();
         setFrame();
-        client = new MulticastSocket(Properties.CLIENTS_PORT);
+        client = new MulticastSocket();
+        NewUsers newUsers = new NewUsers(client);
+        newUsers.start();
+        newUsers.join();
     }
 
     public static void main(String args[]) {
@@ -114,6 +150,7 @@ public class MTChat extends JFrame {
             new MTChat();
         } catch (Exception ex) {
             System.out.println("Cannot run MTChat Client");
+            ex.printStackTrace();
         }
     }
 
@@ -132,20 +169,30 @@ public class MTChat extends JFrame {
 
     private void setComponents() {
         chatsPanel.setLayout(new BoxLayout(chatsPanel, BoxLayout.PAGE_AXIS));
-        chatsListModel.addElement("General");
-        chatsList = new JList<>(chatsListModel);
-        chatsList.addListSelectionListener(e -> setChat());
-        chatsList.setSize(chatsPanel.getSize());
         bodyEditorPane.setContentType("text/html");
         setHtmlBody();
         bodyEditorPane.setText(htmlBuilder.toString());
         bodyEditorPane.setEditable(false);
         scrollPane = new JScrollPane(bodyEditorPane);
+        setChatList();
+        setStart();
+        setInput();
+    }
+    
+    private void setChatList(){
+        chatsPanel.removeAll();
+        if(availableUsers.isEmpty()){
+            chatsListModel.addElement("General");
+        } else {
+            availableUsers.forEach(user->{
+                chatsListModel.addElement(user.getName());
+            });
+        }
+        chatsList = new JList<>(chatsListModel);
+        chatsList.addListSelectionListener(e -> setChat());
         contentSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 chatsList, scrollPane);
         chatsPanel.add(contentSplitPane);
-        setStart();
-        setInput();
     }
 
     private void setStart() {
