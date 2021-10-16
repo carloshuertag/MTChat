@@ -6,7 +6,9 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -38,6 +40,32 @@ import javax.swing.UIManager;
  * @author huert
  */
 public class MTChat extends JFrame {
+    
+    private class NewMessages extends Thread{
+        private final MulticastSocket socket;
+        private DatagramPacket packet;
+        private byte[] buffer;
+        public NewMessages(MulticastSocket socket){
+            this.socket = socket;
+        }
+        public void run(){
+            
+        }
+    }
+    
+    private class NewUsers extends Thread{
+        private final MulticastSocket socket;
+        private DatagramPacket packet;
+        private ByteArrayInputStream bais;
+        private ObjectInputStream ois;
+        private byte[] buffer;
+        public NewUsers(MulticastSocket socket){
+            this.socket = socket;
+        }
+        public void run(){
+            
+        }
+    }
 
     private final JPanel mainPanel, inputPanel, startPanel, chatsPanel;
     private final JEditorPane bodyEditorPane;
@@ -135,8 +163,7 @@ public class MTChat extends JFrame {
 
     public void connect() {
         try {
-            Properties.socketJoinGroup(client, InetAddress.getByName(
-                    Properties.GROUP_IP), false);
+            Properties.socketJoinGroup(client, Properties.CLIENTS_PORT);
             client.setReuseAddress(true);
             client.setTimeToLive(225);
             byte[] buffer = userField.getText().getBytes();

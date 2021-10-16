@@ -1,12 +1,16 @@
 package Chat;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Collections;
 import java.util.Enumeration;
 
 /**
@@ -83,4 +87,40 @@ public class Properties {
             }
         }
     }
+    
+    public static void socketJoinGroup(MulticastSocket ms, int port){
+        try{
+            Collections.list(NetworkInterface.getNetworkInterfaces()).forEach(
+                networkInterface -> {
+                    Properties.displayNetInterfaceInfo(networkInterface);
+            });
+            System.out.print("\nElige la interfaz multicast (0-): ");
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            int interfaz = Integer.parseInt(br.readLine());
+            br.close();
+            NetworkInterface ni = NetworkInterface.getByIndex(interfaz);
+            System.out.println("\nElegiste "+ni.getDisplayName());
+            ms.joinGroup(new InetSocketAddress(InetAddress.getByName(
+                    Properties.GROUP_IP), port), ni);
+        } catch (Exception ex){
+            System.out.println("Falal error: " + ex.getMessage());
+        }
+    }
+    
+    public static void displayNetInterfaceInfo(NetworkInterface networkInterface) {
+        System.out.printf("Nombre de despliegue: %s\n", networkInterface.getDisplayName());
+        System.out.printf("Nombre: %s\n", networkInterface.getName());
+        String multicast;
+        try {
+            multicast = (networkInterface.supportsMulticast())?"Soporta multicast":"No soporta multicast";
+            System.out.printf("Multicast: %s\n", multicast);
+        } catch (SocketException ex) {
+            System.out.println("Falal error: " + ex.getMessage());
+            
+        }
+        Collections.list(networkInterface.getInetAddresses()).forEach(inetAddress->{
+            System.out.printf("Direccion: %s\n", inetAddress);
+        });
+    }
+    
 }

@@ -87,8 +87,7 @@ public class Server {
             server = new MulticastSocket(Properties.SERVER_PORT);
             server.setReuseAddress(true);
             server.setTimeToLive(225);
-            Properties.socketJoinGroup(server, InetAddress.getByName(
-                    Properties.GROUP_IP), false);
+            Properties.socketJoinGroup(server, Properties.SERVER_PORT);
             ReceiveClients receiveClients = new ReceiveClients(server);
             AnnounceClients announceClients = new AnnounceClients(server);
             receiveClients.setPriority(1);
