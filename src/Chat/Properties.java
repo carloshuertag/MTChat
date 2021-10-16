@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
-import java.net.SocketAddress;
 import java.util.Enumeration;
 
 /**
@@ -17,7 +16,8 @@ import java.util.Enumeration;
 public class Properties {
 
     public static final String GROUP_IP = "228.1.1.1";
-    public static final int SERVER_PORT = 1234;
+    public static final int SERVER_PORT = 8888;
+    public static final int CLIENTS_PORT = 8889;
     public static final int WIDTH = 1080;
     public static final int HEIGHT = 720;
     public static final String HTMLHEAD = "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" charset=\"UTF-8\">"

@@ -7,6 +7,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,8 +53,10 @@ public class MTChat extends JFrame {
     private final StringBuilder htmlBuilder;
     private JSplitPane contentSplitPane;
     private JScrollPane scrollPane;
+    private final MulticastSocket client;
+    private DatagramPacket packet;
 
-    public MTChat() {
+    public MTChat() throws IOException {
         super("MTChat");
         mainPanel = new JPanel(new BorderLayout(10, 10));
         startPanel = new JPanel(new GridLayout(2, 2, 10, 10));
@@ -73,10 +78,15 @@ public class MTChat extends JFrame {
         setComponents();
         addComponents();
         setFrame();
+        client = new MulticastSocket(Properties.CLIENTS_PORT);
     }
 
     public static void main(String args[]) {
-        new MTChat();
+        try {
+            new MTChat();
+        } catch (Exception ex) {
+            System.out.println("Cannot run MTChat Client");
+        }
     }
 
     private void setFrame() {
@@ -93,7 +103,7 @@ public class MTChat extends JFrame {
     }
 
     private void setComponents() {
-        chatsPanel.setLayout(new BoxLayout (chatsPanel, BoxLayout.PAGE_AXIS));
+        chatsPanel.setLayout(new BoxLayout(chatsPanel, BoxLayout.PAGE_AXIS));
         chatsListModel.addElement("General");
         chatsList = new JList<>(chatsListModel);
         chatsList.addListSelectionListener(e -> setChat());
@@ -109,7 +119,7 @@ public class MTChat extends JFrame {
         setStart();
         setInput();
     }
-    
+
     private void setStart() {
         connectButton.addActionListener(e -> connect());
         disconnectButton.addActionListener(e -> disconnect());
@@ -118,27 +128,33 @@ public class MTChat extends JFrame {
         startPanel.add(statusLabel);
         startPanel.add(disconnectButton);
     }
-    
-    public void disconnect(){
-        
+
+    public void disconnect() {
+
     }
-    
+
     public void connect() {
-        try{
+        try {
+            Properties.socketJoinGroup(client, InetAddress.getByName(
+                    Properties.GROUP_IP), false);
+            client.setReuseAddress(true);
+            client.setTimeToLive(225);
             byte[] buffer = userField.getText().getBytes();
-            
-        } catch(Exception ex) {
+            packet = new DatagramPacket(buffer, buffer.length,
+                    InetAddress.getByName(Properties.GROUP_IP), Properties.SERVER_PORT);
+            client.send(packet);
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(null,
                     "Unable to connect, try again later",
                     "Oops " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    public void setChat(){
-        
+
+    public void setChat() {
+
     }
-    
-    public void setHtmlBody(){
+
+    public void setHtmlBody() {
         htmlBuilder.setLength(0);
         htmlBuilder.append("<!DOCTYPE html><html>");
         htmlBuilder.append(Properties.HTMLHEAD);
@@ -157,11 +173,11 @@ public class MTChat extends JFrame {
         htmlBuilder.append(Properties.EMOJIURLS[1]);
         htmlBuilder.append(Properties.HTMLIMGEND);
         htmlBuilder.append(Properties.HTMLMSGEND);
-        
+
         htmlBuilder.append("</main></body></html>");
     }
-    
-    private void setInput(){
+
+    private void setInput() {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 0;
@@ -213,7 +229,7 @@ public class MTChat extends JFrame {
             emojisPopupMenu.add(emojisMenuItems.get(i));
         });
     }
-    
+
     private void setAudio() {
         try {
             audioButton.setIcon(new ImageIcon(ImageIO.read(new URL(
@@ -225,7 +241,7 @@ public class MTChat extends JFrame {
             audioButton.setIcon(UIManager.getIcon("FileView.hardDriveIcon"));
         }
         audioButton.addActionListener(i -> {
-            
+
         });
         audioButton.setPreferredSize(new Dimension(50, 25));
     }
