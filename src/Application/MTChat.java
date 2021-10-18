@@ -77,7 +77,6 @@ public class MTChat extends JFrame {
                 socket.receive(packet);
                 usersCount = Integer.parseInt(new String(packet.getData(), 0,
                         packet.getLength()));
-
                 IntStream.range(0, usersCount).forEach(i -> {
                     try {
                         buffer = new byte[65535];
@@ -86,11 +85,12 @@ public class MTChat extends JFrame {
                         bais = new ByteArrayInputStream(packet.getData());
                         ois = new ObjectInputStream(bais);
                         availableUsers.add((User) ois.readObject());
-                        setChatList();
                     } catch (Exception ex) {
                         System.out.println("Error at getting NewUsers list");
                     }
                 });
+                System.out.println(availableUsers.get(availableUsers.size() - 1));
+                setChatList();
                 Thread.sleep(5000);
             } catch (Exception ex) {
                 System.out.println("Error at getting NewUsers");
@@ -140,6 +140,9 @@ public class MTChat extends JFrame {
         addComponents();
         setFrame();
         client = new MulticastSocket();
+        Properties.socketJoinGroup(client, Properties.CLIENTS_PORT);
+        client.setReuseAddress(true);
+        client.setTimeToLive(225);
         NewUsers newUsers = new NewUsers(client);
         newUsers.start();
         newUsers.join();
@@ -178,13 +181,13 @@ public class MTChat extends JFrame {
         setStart();
         setInput();
     }
-    
-    private void setChatList(){
+
+    private void setChatList() {
         chatsPanel.removeAll();
-        if(availableUsers.isEmpty()){
+        if (availableUsers.isEmpty()) {
             chatsListModel.addElement("General");
         } else {
-            availableUsers.forEach(user->{
+            availableUsers.forEach(user -> {
                 chatsListModel.addElement(user.getName());
             });
         }
@@ -210,13 +213,13 @@ public class MTChat extends JFrame {
 
     public void connect() {
         try {
-            Properties.socketJoinGroup(client, Properties.CLIENTS_PORT);
-            client.setReuseAddress(true);
-            client.setTimeToLive(225);
             byte[] buffer = userField.getText().getBytes();
             packet = new DatagramPacket(buffer, buffer.length,
                     InetAddress.getByName(Properties.GROUP_IP), Properties.SERVER_PORT);
             client.send(packet);
+            connectButton.setEnabled(false);
+            statusLabel.setText("Connected");
+            messageArea.setText("");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null,
                     "Unable to connect, try again later",

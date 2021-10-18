@@ -58,30 +58,32 @@ public class Server {
         }
 
         public void run() {
-            try {
-                buffer = String.valueOf(users.size()).getBytes();
-                packet = new DatagramPacket(buffer, buffer.length,
-                        InetAddress.getByName(Properties.GROUP_IP),
-                        Properties.CLIENTS_PORT);
-                socket.send(packet);
-                users.forEach(user -> {
-                    try {
-                        baos = new ByteArrayOutputStream();
-                        oos = new ObjectOutputStream(baos);
-                        oos.writeObject(user);
-                        oos.flush();
-                        buffer = baos.toByteArray();
-                        packet = new DatagramPacket(buffer, buffer.length,
-                                InetAddress.getByName(Properties.GROUP_IP),
-                                Properties.CLIENTS_PORT);
-                        socket.send(packet);
-                    } catch (Exception ex) {
-                        System.out.println("Cannot announce client: " + ex.getMessage());
-                    }
-                });
-                Thread.sleep(5000);
-            } catch (Exception ex) {
-                System.out.println("Thread sleep exception at " + this.getClass().getName());
+            for (;;) {
+                try {
+                    buffer = String.valueOf(users.size()).getBytes();
+                    packet = new DatagramPacket(buffer, buffer.length,
+                            InetAddress.getByName(Properties.GROUP_IP),
+                            Properties.CLIENTS_PORT);
+                    socket.send(packet);
+                    users.forEach(user -> {
+                        try {
+                            baos = new ByteArrayOutputStream();
+                            oos = new ObjectOutputStream(baos);
+                            oos.writeObject(user);
+                            oos.flush();
+                            buffer = baos.toByteArray();
+                            packet = new DatagramPacket(buffer, buffer.length,
+                                    InetAddress.getByName(Properties.GROUP_IP),
+                                    Properties.CLIENTS_PORT);
+                            socket.send(packet);
+                        } catch (Exception ex) {
+                            System.out.println("Cannot announce client: " + ex.getMessage());
+                        }
+                    });
+                    Thread.sleep(5000);
+                } catch (Exception ex) {
+                    System.out.println("Thread sleep exception at " + this.getClass().getName());
+                }
             }
         }
     }
