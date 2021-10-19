@@ -1,17 +1,17 @@
 package Chat;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 
 /**
  *
@@ -60,33 +60,6 @@ public class Properties {
         "Sad"
     };
     public static final String AUDIOICON = "https://vk.com/images/emoji/D83DDCE3_2x.png";
-
-    public static void socketJoinGroup(MulticastSocket ms, InetAddress groupAddr,
-            boolean preferIpv6) throws IOException {
-        boolean interfaceSet = false;
-        Enumeration interfaces = NetworkInterface.getNetworkInterfaces(), addrs;
-        NetworkInterface i;
-        InetAddress address;
-        while (interfaces.hasMoreElements()) {
-            i = (NetworkInterface) interfaces.nextElement();
-            addrs = i.getInetAddresses();
-            while (addrs.hasMoreElements()) {
-                address = (InetAddress) addrs.nextElement();
-                if (preferIpv6 && address instanceof Inet6Address) {
-                    ms.joinGroup(new InetSocketAddress(groupAddr, ms.getPort()), i);
-                    interfaceSet = true;
-                    break;
-                } else if (!preferIpv6 && address instanceof Inet4Address) {
-                    ms.joinGroup(new InetSocketAddress(groupAddr, ms.getPort()), i);
-                    interfaceSet = true;
-                    break;
-                }
-            }
-            if (interfaceSet) {
-                break;
-            }
-        }
-    }
     
     public static void socketJoinGroup(MulticastSocket ms, int port){
         try{
@@ -104,6 +77,36 @@ public class Properties {
                     Properties.GROUP_IP), port), ni);
         } catch (Exception ex){
             System.out.println("Falal error: " + ex.getMessage());
+        }
+    }
+    
+    public static void socketJoinGroupGUI(MulticastSocket ms, int port){
+        try{
+            List<NetworkInterface> networkInterfaces = new ArrayList<>();
+            List<String> displayNames = new ArrayList<>();
+            Collections.list(NetworkInterface.getNetworkInterfaces()).forEach(
+                networkInterface -> {
+                    try{
+                        if(networkInterface.supportsMulticast()){
+                            displayNames.add(networkInterface.getDisplayName());
+                            networkInterfaces.add(networkInterface);
+                        }
+                    } catch(Exception ex){
+                        JOptionPane.showMessageDialog(null, "Couldn't join group",
+                    "Oops " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+                    }
+            });
+            String displayName = (String)JOptionPane.showInputDialog(null,
+                    "Elige la interfaz multicast:", "Conectar con el servidor",
+                    JOptionPane.QUESTION_MESSAGE,
+                    UIManager.getIcon("OptionPane.questionIcon"),
+                    displayNames.toArray(), displayNames.get(4));
+            ms.joinGroup(new InetSocketAddress(InetAddress.getByName(
+                    Properties.GROUP_IP), port), networkInterfaces.get(
+                            displayNames.indexOf(displayName)));
+        } catch (Exception ex){
+            JOptionPane.showMessageDialog(null, "Couldn't join group",
+                    "Oops " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
         }
     }
     

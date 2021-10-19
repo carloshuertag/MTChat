@@ -1,12 +1,15 @@
 package Models;
 
+import java.io.Serializable;
 import java.net.SocketAddress;
 
 /**
  *
  * @author huert
  */
-public class User {
+public class User implements Serializable{
+    
+    private static final long serialVersionUID = 2L;
     private static int usersCount = 1;
     private final int UID;
     private String name;
