@@ -8,8 +8,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -73,27 +75,29 @@ public class MTChat extends JFrame {
             buffer = new byte[65535];
             packet = new DatagramPacket(buffer, buffer.length);
             int usersCount = 0;
-            try {
-                socket.receive(packet);
-                usersCount = Integer.parseInt(new String(packet.getData(), 0,
-                        packet.getLength()));
-                IntStream.range(0, usersCount).forEach(i -> {
-                    try {
-                        buffer = new byte[65535];
-                        packet = new DatagramPacket(buffer, buffer.length);
-                        socket.receive(packet);
-                        bais = new ByteArrayInputStream(packet.getData());
-                        ois = new ObjectInputStream(bais);
-                        availableUsers.add((User) ois.readObject());
-                    } catch (Exception ex) {
-                        System.out.println("Error at getting NewUsers list");
-                    }
-                });
-                System.out.println(availableUsers.get(availableUsers.size() - 1));
-                setChatList();
-                Thread.sleep(5000);
-            } catch (Exception ex) {
-                System.out.println("Error at getting NewUsers");
+            for (;;) {
+                try {
+                    socket.receive(packet);
+                    usersCount = Integer.parseInt(new String(packet.getData(), 0,
+                            packet.getLength()));
+                    IntStream.range(0, usersCount).forEach(i -> {
+                        try {
+                            buffer = new byte[65535];
+                            packet = new DatagramPacket(buffer, buffer.length);
+                            socket.receive(packet);
+                            bais = new ByteArrayInputStream(packet.getData());
+                            ois = new ObjectInputStream(bais);
+                            availableUsers.add((User) ois.readObject());
+                        } catch (Exception ex) {
+                            System.out.println("Error at getting NewUsers list");
+                        }
+                    });
+                    setChatList();
+                    Thread.sleep(5000);
+                } catch (Exception ex) {
+                    System.out.println("Error at getting NewUsers: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
             }
         }
     }
@@ -115,6 +119,12 @@ public class MTChat extends JFrame {
     private final MulticastSocket client;
     private DatagramPacket packet;
     private final List<User> availableUsers;
+    private ObjectOutputStream oos;
+    private ObjectInputStream ois;
+    private ByteArrayInputStream bais;
+    private final ByteArrayOutputStream baos;
+    private byte[] buffer;
+    private User clientUser;
 
     public MTChat() throws IOException, InterruptedException {
         super("MTChat");
@@ -140,7 +150,8 @@ public class MTChat extends JFrame {
         addComponents();
         setFrame();
         client = new MulticastSocket();
-        Properties.socketJoinGroup(client, Properties.CLIENTS_PORT);
+        baos = new ByteArrayOutputStream();
+        Properties.socketJoinGroupGUI(client, Properties.CLIENTS_PORT);
         client.setReuseAddress(true);
         client.setTimeToLive(225);
         NewUsers newUsers = new NewUsers(client);
@@ -213,11 +224,16 @@ public class MTChat extends JFrame {
 
     public void connect() {
         try {
-            byte[] buffer = userField.getText().getBytes();
+            clientUser = new User(userField.getText(), client.getLocalSocketAddress());
+            oos = new ObjectOutputStream(baos);
+            oos.writeObject(clientUser);
+            oos.flush();
+            buffer = baos.toByteArray();
             packet = new DatagramPacket(buffer, buffer.length,
                     InetAddress.getByName(Properties.GROUP_IP), Properties.SERVER_PORT);
             client.send(packet);
             connectButton.setEnabled(false);
+            userField.setEnabled(false);
             statusLabel.setText("Connected");
             messageArea.setText("");
         } catch (Exception ex) {

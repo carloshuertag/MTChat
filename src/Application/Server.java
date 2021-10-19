@@ -2,7 +2,9 @@ package Application;
 
 import Chat.Properties;
 import Models.User;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -23,6 +25,8 @@ public class Server {
 
         private final MulticastSocket socket;
         private DatagramPacket packet;
+        private ByteArrayInputStream bais;
+        private ObjectInputStream ois;
         private byte[] buffer;
 
         public ReceiveClients(MulticastSocket socket) {
@@ -35,8 +39,9 @@ public class Server {
                     buffer = new byte[65535];
                     packet = new DatagramPacket(buffer, buffer.length);
                     socket.receive(packet);
-                    users.add(new User(new String(packet.getData(), 0,
-                            packet.getLength()), socket.getRemoteSocketAddress()));
+                    bais = new ByteArrayInputStream(buffer);
+                    ois = new ObjectInputStream(bais);
+                    users.add((User) ois.readObject());
                     System.out.println("User " + users.get(users.size() - 1) + " online");
                 }
             } catch (Exception ex) {
