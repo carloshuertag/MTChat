@@ -44,13 +44,17 @@ import javax.swing.UIManager;
  */
 public class MTChat extends JFrame {
 
-    private class NewMessages extends Thread {
+    static private class NewMessages extends Thread {
 
-        private final MulticastSocket socket;
+        private MulticastSocket socket;
         private DatagramPacket packet;
         private byte[] buffer;
 
         public NewMessages(MulticastSocket socket) {
+            this.socket = socket;
+        }
+        
+        public void setSocket(MulticastSocket socket){
             this.socket = socket;
         }
 
@@ -59,7 +63,7 @@ public class MTChat extends JFrame {
         }
     }
 
-    private class NewUsers extends Thread {
+    static private class NewUsers extends Thread {
 
         private final MulticastSocket socket;
         private DatagramPacket packet;
@@ -75,11 +79,17 @@ public class MTChat extends JFrame {
             buffer = new byte[65535];
             packet = new DatagramPacket(buffer, buffer.length);
             int usersCount = 0;
+            System.out.println("Thread initialized");
             for (;;) {
+                System.out.println("Thread run");
                 try {
+                    System.out.println("Receiving packets from: "+socket.getInetAddress());
                     socket.receive(packet);
+                    System.out.println("Datagram packet received");
                     usersCount = Integer.parseInt(new String(packet.getData(), 0,
                             packet.getLength()));
+                    System.out.println("Users list size received" + usersCount);
+                    System.out.println("Users count "+usersCount);
                     IntStream.range(0, usersCount).forEach(i -> {
                         try {
                             buffer = new byte[65535];
@@ -93,6 +103,7 @@ public class MTChat extends JFrame {
                         }
                     });
                     setChatList();
+                    System.out.println("Wait for 5 seconds jsjs.");
                     Thread.sleep(5000);
                 } catch (Exception ex) {
                     System.out.println("Error at getting NewUsers: " + ex.getMessage());
@@ -102,7 +113,8 @@ public class MTChat extends JFrame {
         }
     }
 
-    private final JPanel mainPanel, inputPanel, startPanel, chatsPanel;
+    private final JPanel mainPanel, inputPanel, startPanel;
+    private static JPanel chatsPanel;
     private final JEditorPane bodyEditorPane;
     private final JPopupMenu emojisPopupMenu;
     private final List<JMenuItem> emojisMenuItems;
@@ -111,14 +123,14 @@ public class MTChat extends JFrame {
     private final JTextArea messageArea;
     private final JTextField userField;
     private final JLabel statusLabel;
-    private final DefaultListModel<String> chatsListModel;
-    private JList chatsList;
+    private static DefaultListModel<String> chatsListModel;
+    private static JList chatsList;
     private final StringBuilder htmlBuilder;
-    private JSplitPane contentSplitPane;
-    private JScrollPane scrollPane;
-    private final MulticastSocket client;
+    private static JSplitPane contentSplitPane;
+    private static JScrollPane scrollPane;
+    private static MulticastSocket client;
     private DatagramPacket packet;
-    private final List<User> availableUsers;
+    private static List<User> availableUsers;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
     private ByteArrayInputStream bais;
@@ -149,19 +161,20 @@ public class MTChat extends JFrame {
         setComponents();
         addComponents();
         setFrame();
-        client = new MulticastSocket();
         baos = new ByteArrayOutputStream();
-        Properties.socketJoinGroupGUI(client, Properties.CLIENTS_PORT);
-        client.setReuseAddress(true);
-        client.setTimeToLive(225);
-        NewUsers newUsers = new NewUsers(client);
-        newUsers.start();
-        newUsers.join();
     }
 
     public static void main(String args[]) {
         try {
             new MTChat();
+            client = new MulticastSocket();
+            client.setReuseAddress(true);
+            client.setTimeToLive(225);
+            Properties.socketJoinGroupGUI(client, Properties.CLIENTS_PORT);
+            NewUsers newUsers = new NewUsers(client);
+            newUsers.start();
+            System.out.println("Thread started");
+            newUsers.join();
         } catch (Exception ex) {
             System.out.println("Cannot run MTChat Client");
             ex.printStackTrace();
@@ -193,7 +206,7 @@ public class MTChat extends JFrame {
         setInput();
     }
 
-    private void setChatList() {
+    private static void setChatList() {
         chatsPanel.removeAll();
         if (availableUsers.isEmpty()) {
             chatsListModel.addElement("General");
@@ -236,6 +249,7 @@ public class MTChat extends JFrame {
             userField.setEnabled(false);
             statusLabel.setText("Connected");
             messageArea.setText("");
+            repaint();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null,
                     "Unable to connect, try again later",
@@ -243,11 +257,11 @@ public class MTChat extends JFrame {
         }
     }
 
-    public void setChat() {
+    private static void setChat() {
 
     }
 
-    public void setHtmlBody() {
+    private void setHtmlBody() {
         htmlBuilder.setLength(0);
         htmlBuilder.append("<!DOCTYPE html><html>");
         htmlBuilder.append(Properties.HTMLHEAD);

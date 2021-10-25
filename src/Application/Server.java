@@ -70,6 +70,7 @@ public class Server {
                             InetAddress.getByName(Properties.GROUP_IP),
                             Properties.CLIENTS_PORT);
                     socket.send(packet);
+                    System.out.println("Size: "+users.size());
                     users.forEach(user -> {
                         try {
                             baos = new ByteArrayOutputStream();
@@ -80,6 +81,7 @@ public class Server {
                             packet = new DatagramPacket(buffer, buffer.length,
                                     InetAddress.getByName(Properties.GROUP_IP),
                                     Properties.CLIENTS_PORT);
+                            System.out.println(user);
                             socket.send(packet);
                         } catch (Exception ex) {
                             System.out.println("Cannot announce client: " + ex.getMessage());
