@@ -28,10 +28,8 @@ public class Client extends Thread {
         int segment;
         byte[] buffer;
         try{
-            socket = new MulticastSocket();
+            socket = new MulticastSocket(Properties.SERVER_PORT);
             socket.setReuseAddress(true);
-            socket.setTimeToLive(225);
-            socket.setSoTimeout(100);
             name = gui.getUsername();
             Properties.socketJoinGroupGUI(socket, Properties.SERVER_PORT);
             Properties.sendMessage(socket, packet, "<connect>" + name);
@@ -40,24 +38,7 @@ public class Client extends Thread {
         }
         for(;;){
             try {
-                if(gui.getRw()){
-                    buffer = new byte[65535];
-                    packet = new DatagramPacket(buffer, buffer.length);
-                    socket.receive(packet);
-                    bais = new ByteArrayInputStream(packet.getData());
-                    ois = new ObjectInputStream(bais);
-                    data = (Data) ois.readObject();
-                    ois.close();
-                    bais.close();
-                    tmp = new String(data.getData(), 0, data.getData().length);
-                    segment = data.getPacketNo();
-                    copy = message;
-                    message = Properties.getMessage(socket, packet, data,
-                            tmp, message, segment, copy);
-                    if(data.getPacketNo() == data.getTotal() - 1) {
-                        gui.setNewMessage(message);
-                    }
-                } else {
+                if(gui.getRw()){ // write
                     aux.setLength(0);
                     if(gui.isConnected()) {
                         if(gui.getActiveTab() == 0){
@@ -68,16 +49,40 @@ public class Client extends Thread {
                             aux.append(name);
                             aux.append("><");
                             aux.append(gui.getChat());
-                            aux.append(">");
                         }
+                        aux.append(">");
                         aux.append(gui.getMessage());
                         gui.setRw(false);
                     } else {
                         aux.append("<disconnect>");
-                        aux.append("C<msg><private><");
                         aux.append(name);
                     }
                     Properties.sendMessage(socket, packet, aux.toString());
+                    System.out.println("Message sent: "+aux.toString());
+                } else { //read
+                    socket.setSoTimeout(100);
+                    socket.setTimeToLive(1);
+                    try{
+                        buffer = new byte[65535];
+                        packet = new DatagramPacket(buffer, buffer.length);
+                        socket.receive(packet);
+                        bais = new ByteArrayInputStream(packet.getData());
+                        ois = new ObjectInputStream(bais);
+                        data = (Data) ois.readObject();
+                        ois.close();
+                        bais.close();
+                        tmp = new String(data.getData(), 0, data.getData().length);
+                        segment = data.getPacketNo();
+                        copy = message;
+                        message = Properties.getMessage(socket, packet, data,
+                                tmp, message, segment, copy);
+                        if(data.getPacketNo() == data.getTotal() - 1) {
+                            System.out.println("Message received: "+message);
+                            gui.setNewMessage(message);
+                            System.out.println("New Message set");
+                        }
+                        message = "";
+                    } catch (Exception ex) { }
                 }
             } catch(Exception ex) {
                 Properties.fatalError(ex);

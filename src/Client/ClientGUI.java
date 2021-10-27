@@ -17,7 +17,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -64,7 +63,7 @@ public class ClientGUI extends JFrame{
     }
     
     private void setComponents() {
-        JButton newChat = new JButton("New private chat");
+        JButton newChat = new JButton("Start a private chat");
         newChat.addActionListener(e->{
             if(users.size() == 0) JOptionPane.showMessageDialog(null,
                         "No available users, try again later", "No users",
@@ -73,17 +72,19 @@ public class ClientGUI extends JFrame{
                 List<String> usersToDisplay = users;
                 usersToDisplay.remove(username);
                 String selected = (String) JOptionPane.showInputDialog(null,
-                        "New Chat", "Choose the user to chat with",
+                        "New Private Chat", "Choose the user to chat with",
                         JOptionPane.QUESTION_MESSAGE,
                         UIManager.getIcon("OptionPane.questionIcon"),
                         usersToDisplay.toArray(), usersToDisplay.toArray()[0]);
-                if(chatUsers.contains(selected))
-                    chatTabs.setSelectedIndex(chatUsers.indexOf(selected));
-                else{
-                    newChat(selected);
-                    chatTabs.setSelectedIndex(chatUsers.indexOf(selected));
+                if(selected != null){
+                    if(chatUsers.contains(selected))
+                        chatTabs.setSelectedIndex(chatUsers.indexOf(selected));
+                    else{
+                        newChat(selected);
+                        chatTabs.setSelectedIndex(chatUsers.indexOf(selected));
+                    }
+                    rw = false;
                 }
-                rw = false;
             }
         });
         mainPanel.add(newChat, BorderLayout.NORTH);
@@ -130,7 +131,9 @@ public class ClientGUI extends JFrame{
         constraints.weightx = 0.5;
         constraints.ipadx = 2 * Properties.WIDTH / 3;
         constraints.ipady = 25;
-        inputPanel.add(messageArea, constraints);
+        messageArea.setEditable(true);
+        JScrollPane messageScroll = new JScrollPane(messageArea);
+        inputPanel.add(messageScroll, constraints);
         constraints.gridx++;
         constraints.ipadx = 0;
         setEmojis(emojiButton);
@@ -246,7 +249,7 @@ public class ClientGUI extends JFrame{
             for(i = i; i < max; i++) user += message.charAt(i);
             if(message.contains("<private>")) {
                 message = message.substring(++i);
-                for(i = 1; Character.isLetter(message.charAt(i)); i++)
+                for(i = 1;  i < message.length() && Character.isLetter(message.charAt(i)); i++)
                     dst += message.charAt(i);
                 message = message.substring(++i);
                 if(username.equals(dst))

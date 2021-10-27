@@ -138,7 +138,7 @@ public class Properties {
         Data data;
         ByteArrayOutputStream baos;
         ObjectOutputStream oos;
-        if(buffer.length>Properties.BUFF_MAX){
+        if(buffer.length > Properties.BUFF_MAX){
                     ByteArrayInputStream bais = new ByteArrayInputStream(buffer);
             int np = buffer.length/Properties.BUFF_MAX;
             np = (buffer.length%Properties.BUFF_MAX>0)? np+1: np;
