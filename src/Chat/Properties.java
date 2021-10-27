@@ -1,7 +1,12 @@
 package Chat;
 
+import Models.Data;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
@@ -22,6 +27,7 @@ public class Properties {
     public static final String GROUP_IP = "228.1.1.1";
     public static final int SERVER_PORT = 8888;
     public static final int CLIENTS_PORT = 8889;
+    public static final int BUFF_MAX = 1500;
     public static final int WIDTH = 1080;
     public static final int HEIGHT = 720;
     public static final String HTMLHEAD = "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" charset=\"UTF-8\">"
@@ -124,6 +130,71 @@ public class Properties {
         Collections.list(networkInterface.getInetAddresses()).forEach(inetAddress->{
             System.out.printf("Direccion: %s\n", inetAddress);
         });
+    }
+    
+    public static void sendMessage(MulticastSocket socket, DatagramPacket packet,
+            String message) throws Exception{
+        byte[] buffer = message.getBytes(), tmp;
+        Data data;
+        ByteArrayOutputStream baos;
+        ObjectOutputStream oos;
+        if(buffer.length>Properties.BUFF_MAX){
+                    ByteArrayInputStream bais = new ByteArrayInputStream(buffer);
+            int np = buffer.length/Properties.BUFF_MAX;
+            np = (buffer.length%Properties.BUFF_MAX>0)? np+1: np;
+            byte[] buff;
+            for(int i=0;i<np;i++){
+                buff = new byte[Properties.BUFF_MAX];
+                data = new Data(i,np,(i-1), buff);
+                baos = new ByteArrayOutputStream();
+                oos = new ObjectOutputStream(baos);
+                oos.writeObject(data);
+                oos.flush();
+                tmp = baos.toByteArray();
+                packet = new DatagramPacket(tmp,tmp.length,
+                        InetAddress.getByName(Properties.GROUP_IP),
+                        Properties.SERVER_PORT);
+                socket.send(packet);
+            }
+        } else {
+                data = new Data(0,1,-1, buffer);
+                baos = new ByteArrayOutputStream();
+                oos = new ObjectOutputStream(baos);
+                oos.writeObject(data);
+                oos.flush();
+                tmp = baos.toByteArray();
+                packet = new DatagramPacket(tmp,tmp.length,
+                        InetAddress.getByName(Properties.GROUP_IP),
+                        Properties.SERVER_PORT);
+                socket.send(packet);
+        }
+    }
+    
+    public static String getMessage(MulticastSocket socket, DatagramPacket packet,
+            Data data, String tmp, String message, int segment, String copy)
+            throws Exception{
+        String aux = "";
+        int wrongSegments;
+        if(segment > data.getPrevPacketNo()) {
+           socket.send(packet);
+           message += tmp; 
+        } else {
+            socket.send(packet);
+            wrongSegments = data.getPrevPacketNo() - segment;
+            int last_index = copy.length()- (5*wrongSegments);
+            for(int i=0; i<copy.length();i++) { //Inserts og string into aux
+                aux += copy.charAt(i); //Insert the new string in the middle of aux
+                if(i== last_index) aux += tmp;
+            }
+            message = aux; 
+        }
+        return message;
+    }
+    
+   public static void fatalError(Exception ex){
+        System.err.println("Falata error: " + ex.getMessage());
+        ex.printStackTrace();
+        System.exit(1);
     }
     
 }

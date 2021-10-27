@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author huert
  */
-public class Server {
+public class Server_legacy {
 
     private static MulticastSocket server;
     private static List<User> users;
