@@ -29,15 +29,14 @@ public class Client extends Thread {
         byte[] buffer;
         try{
             socket = new MulticastSocket(Properties.SERVER_PORT);
-            socket.setReuseAddress(true);
             name = gui.getUsername();
             Properties.socketJoinGroupGUI(socket, Properties.SERVER_PORT);
             Properties.sendMessage(socket, packet, "<connect>" + name);
         } catch (Exception ex) {
             Properties.fatalError(ex);
         }
-        for(;;){
-            try {
+        try {
+            for(;;){
                 if(gui.getRw()){ // write
                     aux.setLength(0);
                     if(gui.isConnected()) {
@@ -52,16 +51,15 @@ public class Client extends Thread {
                         }
                         aux.append(">");
                         aux.append(gui.getMessage());
-                        gui.setRw(false);
                     } else {
                         aux.append("<disconnect>");
                         aux.append(name);
                     }
+                    gui.setRw(false);
                     Properties.sendMessage(socket, packet, aux.toString());
                     System.out.println("Message sent: "+aux.toString());
                 } else { //read
                     socket.setSoTimeout(100);
-                    socket.setTimeToLive(1);
                     try{
                         buffer = new byte[65535];
                         packet = new DatagramPacket(buffer, buffer.length);
@@ -84,9 +82,9 @@ public class Client extends Thread {
                         message = "";
                     } catch (Exception ex) { }
                 }
-            } catch(Exception ex) {
-                Properties.fatalError(ex);
             }
+        } catch(Exception ex) {
+            Properties.fatalError(ex);
         }
     }
     

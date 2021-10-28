@@ -33,7 +33,6 @@ public class Server extends Thread {
         for(;;)
             try{
                 socket = new MulticastSocket(Properties.SERVER_PORT);
-                socket.setReuseAddress(true);
                 if(first){
                     Properties.socketJoinGroup(socket, Properties.SERVER_PORT);
                     ni = socket.getNetworkInterface();

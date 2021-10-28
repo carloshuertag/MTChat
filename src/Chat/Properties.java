@@ -2,7 +2,6 @@ package Chat;
 
 import Models.Data;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
@@ -136,10 +135,9 @@ public class Properties {
             String message) throws Exception{
         byte[] buffer = message.getBytes(), tmp;
         Data data;
-        ByteArrayOutputStream baos;
-        ObjectOutputStream oos;
+        ByteArrayOutputStream baos = null;
+        ObjectOutputStream oos = null;
         if(buffer.length > Properties.BUFF_MAX){
-                    ByteArrayInputStream bais = new ByteArrayInputStream(buffer);
             int np = buffer.length/Properties.BUFF_MAX;
             np = (buffer.length%Properties.BUFF_MAX>0)? np+1: np;
             byte[] buff;
@@ -168,19 +166,20 @@ public class Properties {
                         Properties.SERVER_PORT);
                 socket.send(packet);
         }
+        baos.close();
+        oos.close();
     }
     
     public static String getMessage(MulticastSocket socket, DatagramPacket packet,
             Data data, String tmp, String message, int segment, String copy)
             throws Exception{
         String aux = "";
-        int wrongSegments;
         if(segment > data.getPrevPacketNo()) {
            socket.send(packet);
            message += tmp; 
         } else {
             socket.send(packet);
-            wrongSegments = data.getPrevPacketNo() - segment;
+            int wrongSegments = data.getPrevPacketNo() - segment;
             int last_index = copy.length()- (5*wrongSegments);
             for(int i=0; i<copy.length();i++) { //Inserts og string into aux
                 aux += copy.charAt(i); //Insert the new string in the middle of aux
