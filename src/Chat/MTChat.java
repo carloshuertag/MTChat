@@ -21,7 +21,7 @@ import javax.swing.UIManager;
  *
  * @author huert
  */
-public class Properties {
+public class MTChat {
 
     public static final String GROUP_IP = "228.1.1.1";
     public static final int SERVER_PORT = 8888;
@@ -68,9 +68,8 @@ public class Properties {
     
     public static void socketJoinGroup(MulticastSocket ms, int port){
         try{
-            Collections.list(NetworkInterface.getNetworkInterfaces()).forEach(
-                networkInterface -> {
-                    Properties.displayNetInterfaceInfo(networkInterface);
+            Collections.list(NetworkInterface.getNetworkInterfaces()).forEach(networkInterface -> {
+                    MTChat.displayNetInterfaceInfo(networkInterface);
             });
             System.out.print("\nElige la interfaz multicast (0-): ");
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -78,8 +77,7 @@ public class Properties {
             br.close();
             NetworkInterface ni = NetworkInterface.getByIndex(interfaz);
             System.out.println("\nElegiste "+ni.getDisplayName());
-            ms.joinGroup(new InetSocketAddress(InetAddress.getByName(
-                    Properties.GROUP_IP), port), ni);
+            ms.joinGroup(new InetSocketAddress(InetAddress.getByName(MTChat.GROUP_IP), port), ni);
         } catch (Exception ex){
             System.out.println("Falal error: " + ex.getMessage());
         }
@@ -102,12 +100,11 @@ public class Properties {
                     }
             });
             String displayName = (String)JOptionPane.showInputDialog(null,
-                    "Elige la interfaz multicast:", "Conectar con el servidor",
+                    "Choose yout multicast interface:", "Multicast Interface",
                     JOptionPane.QUESTION_MESSAGE,
                     UIManager.getIcon("OptionPane.questionIcon"),
                     displayNames.toArray(), displayNames.get(4));
-            ms.joinGroup(new InetSocketAddress(InetAddress.getByName(
-                    Properties.GROUP_IP), port), networkInterfaces.get(
+            ms.joinGroup(new InetSocketAddress(InetAddress.getByName(MTChat.GROUP_IP), port), networkInterfaces.get(
                             displayNames.indexOf(displayName)));
         } catch (Exception ex){
             JOptionPane.showMessageDialog(null, "Couldn't join group",
@@ -137,12 +134,12 @@ public class Properties {
         Data data;
         ByteArrayOutputStream baos = null;
         ObjectOutputStream oos = null;
-        if(buffer.length > Properties.BUFF_MAX){
-            int np = buffer.length/Properties.BUFF_MAX;
-            np = (buffer.length%Properties.BUFF_MAX>0)? np+1: np;
+        if(buffer.length > MTChat.BUFF_MAX){
+            int np = buffer.length/MTChat.BUFF_MAX;
+            np = (buffer.length%MTChat.BUFF_MAX>0)? np+1: np;
             byte[] buff;
             for(int i=0;i<np;i++){
-                buff = new byte[Properties.BUFF_MAX];
+                buff = new byte[MTChat.BUFF_MAX];
                 data = new Data(i,np,(i-1), buff);
                 baos = new ByteArrayOutputStream();
                 oos = new ObjectOutputStream(baos);
@@ -150,8 +147,8 @@ public class Properties {
                 oos.flush();
                 tmp = baos.toByteArray();
                 packet = new DatagramPacket(tmp,tmp.length,
-                        InetAddress.getByName(Properties.GROUP_IP),
-                        Properties.SERVER_PORT);
+                        InetAddress.getByName(MTChat.GROUP_IP),
+                        MTChat.SERVER_PORT);
                 socket.send(packet);
             }
         } else {
@@ -162,8 +159,8 @@ public class Properties {
                 oos.flush();
                 tmp = baos.toByteArray();
                 packet = new DatagramPacket(tmp,tmp.length,
-                        InetAddress.getByName(Properties.GROUP_IP),
-                        Properties.SERVER_PORT);
+                        InetAddress.getByName(MTChat.GROUP_IP),
+                        MTChat.SERVER_PORT);
                 socket.send(packet);
         }
         baos.close();
@@ -175,12 +172,10 @@ public class Properties {
             throws Exception{
         String aux = "";
         if(segment > data.getPrevPacketNo()) {
-           socket.send(packet);
            message += tmp; 
         } else {
-            socket.send(packet);
             int wrongSegments = data.getPrevPacketNo() - segment;
-            int last_index = copy.length()- (5*wrongSegments);
+            int last_index = copy.length()- (MTChat.BUFF_MAX * wrongSegments);
             for(int i=0; i<copy.length();i++) { //Inserts og string into aux
                 aux += copy.charAt(i); //Insert the new string in the middle of aux
                 if(i== last_index) aux += tmp;

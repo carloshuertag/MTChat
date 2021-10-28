@@ -1,6 +1,6 @@
 package Client;
 
-import Chat.Properties;
+import Chat.MTChat;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -71,19 +71,24 @@ public class ClientGUI extends JFrame{
             else {
                 List<String> usersToDisplay = users;
                 usersToDisplay.remove(username);
-                String selected = (String) JOptionPane.showInputDialog(null,
-                        "New Private Chat", "Choose the user to chat with",
-                        JOptionPane.QUESTION_MESSAGE,
-                        UIManager.getIcon("OptionPane.questionIcon"),
-                        usersToDisplay.toArray(), usersToDisplay.toArray()[0]);
-                if(selected != null){
-                    if(chatUsers.contains(selected))
-                        chatTabs.setSelectedIndex(chatUsers.indexOf(selected));
-                    else{
-                        newChat(selected);
-                        chatTabs.setSelectedIndex(chatUsers.indexOf(selected));
+                if(usersToDisplay.size() == 0) JOptionPane.showMessageDialog(null,
+                        "No available users, try again later", "No users",
+                        JOptionPane.ERROR_MESSAGE);
+                else {
+                    String selected = (String) JOptionPane.showInputDialog(null,
+                            "New Private Chat", "Choose the user to chat with",
+                            JOptionPane.QUESTION_MESSAGE,
+                            UIManager.getIcon("OptionPane.questionIcon"),
+                            usersToDisplay.toArray(), usersToDisplay.toArray()[0]);
+                    if(selected != null){
+                        if(chatUsers.contains(selected))
+                            chatTabs.setSelectedIndex(chatUsers.indexOf(selected));
+                        else{
+                            newChat(selected);
+                            chatTabs.setSelectedIndex(chatUsers.indexOf(selected));
+                        }
+                        rw = false;
                     }
-                    rw = false;
                 }
             }
         });
@@ -103,8 +108,8 @@ public class ClientGUI extends JFrame{
         editorPane.setContentType("text/html");
         htmlBuilder.setLength(0);
         htmlBuilder.append("<!DOCTYPE html><html>");
-        htmlBuilder.append(Properties.HTMLHEAD);
-        htmlBuilder.append("<body><h1>Chatting with:");
+        htmlBuilder.append(MTChat.HTMLHEAD);
+        htmlBuilder.append("<body><h1>Chatting with: ");
         htmlBuilder.append(name);
         htmlBuilder.append("</h1><main></main></body></html>");
         editorPane.setText(htmlBuilder.toString());
@@ -129,7 +134,7 @@ public class ClientGUI extends JFrame{
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.weightx = 0.5;
-        constraints.ipadx = 2 * Properties.WIDTH / 3;
+        constraints.ipadx = 2 * MTChat.WIDTH / 3;
         constraints.ipady = 25;
         messageArea.setEditable(true);
         JScrollPane messageScroll = new JScrollPane(messageArea);
@@ -150,7 +155,7 @@ public class ClientGUI extends JFrame{
         List<JMenuItem> emojisMenuItems = new ArrayList<>();
         try {
             emojiButton.setIcon(new ImageIcon(ImageIO.read(new URL(
-                    Properties.EMOJIURLS[0]))));
+                    MTChat.EMOJIURLS[0]))));
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(null,
                     "Unable to load emojis, sorry", "Oops" + ex.getMessage(),
@@ -161,16 +166,15 @@ public class ClientGUI extends JFrame{
             emojisPopupMenu.show(emojiButton, 0, 0);
         });
         emojiButton.setPreferredSize(new Dimension(50, 25));
-        IntStream.range(0, Properties.EMOJIURLS.length).forEach(i -> {
+        IntStream.range(0, MTChat.EMOJIURLS.length).forEach(i -> {
             try {
-                emojisMenuItems.add(new JMenuItem(new ImageIcon(ImageIO.read(
-                        new URL(Properties.EMOJIURLS[i])))));
+                emojisMenuItems.add(new JMenuItem(new ImageIcon(ImageIO.read(new URL(MTChat.EMOJIURLS[i])))));
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(null,
                         "Unable to load emojis, sorry", "Oops" + ex.getMessage(),
                         JOptionPane.ERROR_MESSAGE);
-                IntStream.range(0, Properties.EMOJINAMES.length).forEach(j -> {
-                    emojisMenuItems.add(new JMenuItem(Properties.EMOJINAMES[i]));
+                IntStream.range(0, MTChat.EMOJINAMES.length).forEach(j -> {
+                    emojisMenuItems.add(new JMenuItem(MTChat.EMOJINAMES[i]));
                 });
             }
             emojisMenuItems.get(i).addActionListener(e -> appendEmoji(i));
@@ -182,9 +186,9 @@ public class ClientGUI extends JFrame{
     
     private void appendEmoji(int selectedIndex) {
         htmlBuilder.setLength(0);
-        htmlBuilder.append(Properties.HTMLIMGSTART);
-        htmlBuilder.append(Properties.EMOJIURLS[selectedIndex]);
-        htmlBuilder.append(Properties.HTMLIMGEND);
+        htmlBuilder.append(MTChat.HTMLIMGSTART);
+        htmlBuilder.append(MTChat.EMOJIURLS[selectedIndex]);
+        htmlBuilder.append(MTChat.HTMLIMGEND);
         messageArea.setText(htmlBuilder.toString());
         rw = true;
     }
@@ -192,7 +196,7 @@ public class ClientGUI extends JFrame{
     private void setAudio(JButton audioButton) {
         try {
             audioButton.setIcon(new ImageIcon(ImageIO.read(new URL(
-                    Properties.AUDIOICON))));
+                    MTChat.AUDIOICON))));
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(null,
                     "Unable to load emojis, sorry", "Oops" + ex.getMessage(),
@@ -207,7 +211,7 @@ public class ClientGUI extends JFrame{
     
     private void setFrame() {
         setTitle("MTChat: " + username);
-        setSize(Properties.WIDTH, Properties.HEIGHT);
+        setSize(MTChat.WIDTH, MTChat.HEIGHT);
         setResizable(false);
         setVisible(true);
         setAutoRequestFocus(true);
@@ -221,7 +225,7 @@ public class ClientGUI extends JFrame{
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
-                    Properties.fatalError(ex);
+                    MTChat.fatalError(ex);
                 }
                 dispose();
                 System.exit(0);
@@ -236,15 +240,14 @@ public class ClientGUI extends JFrame{
             for(int i = 8; i < message.length(); i++)
                 if(Character.isLetter(message.charAt(i)))
                     user += message.charAt(i);
-                else if(message.charAt(i) == ','){
+                else if(message.charAt(i) == ',' || message.charAt(i) == ']'){
                     users.add(user);
                     user = "";
                 }
         } else if (message.startsWith("S<msg>")) {
             String dst = "";
             message = message.substring(6);
-            htmlBuilder.setLength(0);
-            int i = message.contains("<private>") ? message.indexOf('<', 8): 7;
+            int i = message.contains("<private>") ? message.indexOf('<', 1): 0;
             int max = message.indexOf('>', ++i);
             for(i = i; i < max; i++) user += message.charAt(i);
             if(message.contains("<private>")) {
@@ -258,29 +261,32 @@ public class ClientGUI extends JFrame{
                                 user, message);
                     else {
                         newChat(user);
-                        displayNewMessage(chatTabs.getSelectedIndex(), false,
+                        displayNewMessage(chatTabs.getTabCount() - 1, false,
                                 user, message);
                     }
-                else 
+                else if (username.equals(user))
                     displayNewMessage(chatTabs.getSelectedIndex(), true, user,
                             message);
             } else
-                displayNewMessage(0, false, user, message);
+                displayNewMessage(0, user.equals(username), user, message);
         }
     }
     
     public void displayNewMessage(int index, boolean response, String user,
             String message) {
+        htmlBuilder.setLength(0);
         String tmp = chatPanes.get(index).getText();
-        tmp = tmp.replace("</main></body></html>", "");
+        tmp = tmp.replace("</main>", "").replace("</body>", "").replace("</html>", "");
         htmlBuilder.append(tmp);
-        if(response) htmlBuilder.append(Properties.HTMLMSG2START);
-        else htmlBuilder.append(Properties.HTMLMSG1START);
+        if(response) htmlBuilder.append(MTChat.HTMLMSG2START);
+        else htmlBuilder.append(MTChat.HTMLMSG1START);
         htmlBuilder.append(user);
+        htmlBuilder.append(" says: ");
         htmlBuilder.append(message);
-        htmlBuilder.append(Properties.HTMLMSGEND);
+        htmlBuilder.append(MTChat.HTMLMSGEND);
         htmlBuilder.append("</main></body></html>");
         chatPanes.get(index).setText(htmlBuilder.toString());
+        repaint();
     }
 
     public boolean getRw() {

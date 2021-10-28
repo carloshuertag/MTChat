@@ -1,6 +1,7 @@
-package Chat;
+package Client;
 
-import Chat.Properties;
+import Chat.MTChat;
+import Chat.MTChat;
 import Client.ClientGUI;
 import Models.Data;
 import java.io.ByteArrayInputStream;
@@ -28,12 +29,12 @@ public class Client extends Thread {
         int segment;
         byte[] buffer;
         try{
-            socket = new MulticastSocket(Properties.SERVER_PORT);
+            socket = new MulticastSocket(MTChat.SERVER_PORT);
             name = gui.getUsername();
-            Properties.socketJoinGroupGUI(socket, Properties.SERVER_PORT);
-            Properties.sendMessage(socket, packet, "<connect>" + name);
+            MTChat.socketJoinGroupGUI(socket, MTChat.SERVER_PORT);
+            MTChat.sendMessage(socket, packet, "<connect>" + name);
         } catch (Exception ex) {
-            Properties.fatalError(ex);
+            MTChat.fatalError(ex);
         }
         try {
             for(;;){
@@ -56,8 +57,7 @@ public class Client extends Thread {
                         aux.append(name);
                     }
                     gui.setRw(false);
-                    Properties.sendMessage(socket, packet, aux.toString());
-                    System.out.println("Message sent: "+aux.toString());
+                    MTChat.sendMessage(socket, packet, aux.toString());
                 } else { //read
                     socket.setSoTimeout(100);
                     try{
@@ -72,19 +72,17 @@ public class Client extends Thread {
                         tmp = new String(data.getData(), 0, data.getData().length);
                         segment = data.getPacketNo();
                         copy = message;
-                        message = Properties.getMessage(socket, packet, data,
+                        message = MTChat.getMessage(socket, packet, data,
                                 tmp, message, segment, copy);
                         if(data.getPacketNo() == data.getTotal() - 1) {
-                            System.out.println("Message received: "+message);
                             gui.setNewMessage(message);
-                            System.out.println("New Message set");
                         }
                         message = "";
                     } catch (Exception ex) { }
                 }
             }
         } catch(Exception ex) {
-            Properties.fatalError(ex);
+            MTChat.fatalError(ex);
         }
     }
     
@@ -95,7 +93,7 @@ public class Client extends Thread {
         try {
             multicastChatClient.join();
         } catch (Exception ex){
-            Properties.fatalError(ex);
+            MTChat.fatalError(ex);
         }
     }
     

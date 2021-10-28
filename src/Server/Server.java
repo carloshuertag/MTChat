@@ -1,6 +1,6 @@
 package Server;
 
-import Chat.Properties;
+import Chat.MTChat;
 import Models.Data;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
@@ -32,15 +32,15 @@ public class Server extends Thread {
         byte[] buffer;
         for(;;)
             try{
-                socket = new MulticastSocket(Properties.SERVER_PORT);
+                socket = new MulticastSocket(MTChat.SERVER_PORT);
                 if(first){
-                    Properties.socketJoinGroup(socket, Properties.SERVER_PORT);
+                    MTChat.socketJoinGroup(socket, MTChat.SERVER_PORT);
                     ni = socket.getNetworkInterface();
                     first = false;
                 } else {
                     socket.joinGroup(new InetSocketAddress(
-                            InetAddress.getByName(Properties.GROUP_IP),
-                            Properties.SERVER_PORT), ni);
+                            InetAddress.getByName(MTChat.GROUP_IP),
+                            MTChat.SERVER_PORT), ni);
                 }
                 buffer = new byte[65535];
                 packet = new DatagramPacket(buffer, buffer.length);
@@ -53,7 +53,7 @@ public class Server extends Thread {
                 tmp = new String(data.getData(), 0, data.getData().length);
                 segment = data.getPacketNo();
                 copy = message;
-                message = Properties.getMessage(socket, packet, data, tmp,
+                message = MTChat.getMessage(socket, packet, data, tmp,
                         message, segment, copy);
                 if(data.getPacketNo() == data.getTotal() - 1) {
                     if(message.contains("<connect>")){
@@ -77,15 +77,14 @@ public class Server extends Thread {
                     } else coms = false;
                     if(coms) {
                         System.out.println("Received: " + message);
-                        Properties.sendMessage(socket, packet, aux);
+                        MTChat.sendMessage(socket, packet, aux);
                         socket.close();
                         System.out.println("Sent: "+aux);
                     }
                     message = "";
                 }
-                Thread.sleep(5000);
             } catch (Exception ex) {
-                Properties.fatalError(ex);
+                MTChat.fatalError(ex);
             }
     }
     
@@ -95,7 +94,7 @@ public class Server extends Thread {
         try {
             multicastChatServer.join();
         } catch (Exception ex){
-            Properties.fatalError(ex);
+            MTChat.fatalError(ex);
         }
     }
 }
